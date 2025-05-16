@@ -10,7 +10,6 @@ import (
 func main() {
 	csvFileName := flag.String("csv", "problems.csv", "csv file in the format 'qustion,answer'")
 	flag.Parse() // to parse all flags
-	_ = csvFileName
 	file, err := os.Open(*csvFileName)
 	if err != nil {
 		exit(fmt.Sprintf("Failed to open %s", *csvFileName))
