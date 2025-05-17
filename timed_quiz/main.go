@@ -29,22 +29,26 @@ func main() {
 
 	correct := 0
 	for i, p := range problems {
-		select {
-		case <-timer.C:
-			fmt.Printf("You scored %d out of %d", correct, len(problems))
-			return
-		default:
-			fmt.Printf("Problem #%d: %s = ", i+1, p.Q)
+		fmt.Printf("Problem #%d: %s = ", i+1, p.Q)
+		answerChan := make(chan string)
+		go func() {
 			var answer string
 			fmt.Scanf("%s\n", &answer)
+			answerChan <- answer
+		}()
+		select {
+		case <-timer.C:
+			fmt.Printf("\nYou scored %d out of %d", correct, len(problems))
+			return
+		case answer := <-answerChan:
 			if answer != p.A {
 				fmt.Printf("Wrong answer %s, correct answer is %s\n", answer, p.A)
 			} else {
 				correct++
 			}
 		}
-
 	}
+	fmt.Printf("You scored %d out of %d", correct, len(problems))
 }
 
 func parseLines(lines [][]string) []models.Problem {
