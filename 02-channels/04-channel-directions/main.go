@@ -33,12 +33,36 @@ import "fmt"
 
 // TODO: Implement generator — returns a <-chan int that produces 1..n, then closes.
 // func generator(n int) <-chan int { ... }
+func generator(n int) <-chan int {
+	nums := make(chan int, 10)
+	go func() {
+		defer close(nums)
+		for i := range n {
+			nums <- i
+		}
+	}()
+	return nums
+}
 
 // TODO: Implement squarer — reads from in, squares each value, sends on output, then closes.
 // func squarer(in <-chan int) <-chan int { ... }
+func squarer(in <-chan int) <-chan int {
+	out := make(chan int)
+	go func() {
+		defer close(out)
+		for num := range in {
+			out <- num * num
+		}
+	}()
+	return out
+}
 
 func main() {
-	_ = fmt.Println // remove once you use fmt
 
-	// TODO: Wire generator(5) -> squarer -> print results
+	for num := range squarer(generator(5)) {
+		fmt.Println(num)
+	}
+	// for sq := range squarer(generator(5)) {
+	// 	fmt.Println(sq)
+	// }
 }
