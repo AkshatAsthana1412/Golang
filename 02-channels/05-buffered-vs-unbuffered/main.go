@@ -30,22 +30,49 @@
 
 package main
 
-import "fmt"
+import (
+	"fmt"
+	"sync"
+)
 
 // TODO: Implement bufferedDemo
 // func bufferedDemo() { ... }
+func bufferedDemo() {
+	ch := make(chan int, 3)
+	for i := range 3 {
+		ch <- i
+	}
+	close(ch)
+	fmt.Println("All nums pushed into buffer in the same goroutine, without any receiver goroutine")
+	for i := range ch {
+		fmt.Println(i)
+	}
+}
 
 // TODO: Implement unbufferedDeadlock (will panic with "all goroutines are asleep")
 // func unbufferedDeadlock() { ... }
+func unbufferedDeadlock() {
+	ch := make(chan int)
+	ch <- 1
+	fmt.Println("Pushed to unbuffered channel from main goroutine")
+}
 
 // TODO: Implement unbufferedFixed
-// func unbufferedFixed() { ... }
+func unbufferedFixed(wg *sync.WaitGroup) {
+	ch := make(chan int)
+	go func() {
+		defer wg.Done()
+		fmt.Printf("Received from ch: %d", <-ch)
+	}()
+	ch <- 1
+}
 
 func main() {
-	_ = fmt.Println // remove once you use fmt
-
 	// TODO: Uncomment these one at a time to observe behavior:
 	// bufferedDemo()
-	// unbufferedDeadlock()   // WARNING: this will crash — that's the point!
-	// unbufferedFixed()
+	// unbufferedDeadlock() // WARNING: this will crash — that's the point!
+	var wg sync.WaitGroup
+	wg.Add(1)
+	unbufferedFixed(&wg)
+	wg.Wait()
 }
