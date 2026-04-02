@@ -27,8 +27,11 @@ import (
 func main() {
 	// TODO: Launch 5 goroutines. Each should print "Hello from goroutine N".
 
-	_ = fmt.Println // remove once you use fmt
-	_ = time.Sleep   // remove once you use time
+	for i := 0; i < 5; i++ {
+		go func() {
+			fmt.Println("Hello from goroutine", i)
+		}()
+	}
 
 	// Temporary sleep so main doesn't exit before goroutines finish.
 	// (This is intentionally fragile — Problem 2 shows the right way.)
