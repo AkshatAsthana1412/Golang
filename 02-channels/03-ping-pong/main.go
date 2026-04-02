@@ -24,13 +24,57 @@
 
 package main
 
-import "fmt"
+import (
+	"fmt"
+	"os"
+	"runtime/trace"
+)
 
 func main() {
 	// TODO: Create channel(s) and launch two goroutines (ping and pong).
 	// Each receives the ball, increments it, prints its role and the count,
 	// and sends the ball to the other side.
 	// Stop when the count reaches 10.
+	// Trace must go to its own file (or stderr); mixing trace binary data with
+	// fmt.Println on stdout corrupts the file (go tool trace will fail to parse).
+	traceFile, err := os.Create("trace.out")
+	if err != nil {
+		panic(err)
+	}
+	defer traceFile.Close()
+	if err := trace.Start(traceFile); err != nil {
+		panic(err)
+	}
+	defer trace.Stop()
+	ball := make(chan int)
+	done := make(chan struct{})
 
-	_ = fmt.Println // remove once you use fmt
+	// ping
+	go func() {
+		for {
+			count := <-ball
+			if count > 10 {
+				done <- struct{}{}
+				return
+			}
+			ball <- count + 1
+			fmt.Println("Ball hit by ping.")
+		}
+	}()
+
+	// pong
+	go func() {
+		for {
+			count := <-ball
+			if count > 10 {
+				done <- struct{}{}
+				return
+			}
+			ball <- count + 1
+			fmt.Println("Ball hit by pong.")
+		}
+	}()
+
+	ball <- 1
+	<-done
 }
