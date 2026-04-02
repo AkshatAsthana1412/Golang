@@ -37,8 +37,16 @@ func simulateFetch() string {
 func main() {
 	// TODO: Launch simulateFetch in a goroutine, sending the result on a channel.
 	// Use select to either receive the result or time out after 300ms.
+	ch := make(chan string)
 
-	_ = fmt.Println    // remove once you use fmt
-	_ = time.After     // remove once you use time.After
-	_ = simulateFetch  // remove once you use simulateFetch
+	go func() {
+		ch <- simulateFetch()
+	}()
+
+	select {
+	case res := <-ch:
+		fmt.Println(res)
+	case <-time.After(300 * time.Millisecond):
+		fmt.Println("Timeout!")
+	}
 }
