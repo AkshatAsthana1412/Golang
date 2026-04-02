@@ -39,15 +39,17 @@ func main() {
 		"https://example.com/api/photos",
 	}
 
-	_ = sync.WaitGroup{} // remove once you use WaitGroup
-
-	// TODO: Fetch all URLs concurrently using goroutines.
-	// Print each result as it arrives.
-	// Use sync.WaitGroup to ensure main waits for all fetches to complete.
+	wg := sync.WaitGroup{}
 
 	for _, url := range urls {
-		_ = url // remove once you use url
+		wg.Add(1)
+		go func() {
+			defer wg.Done()
+			result := simulateFetch(url)
+			fmt.Println(result)
+		}()
 	}
 
+	wg.Wait()
 	fmt.Println("All fetches complete.")
 }
