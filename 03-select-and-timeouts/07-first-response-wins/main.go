@@ -15,6 +15,27 @@
 //
 // Run:
 //   go run .
+//
+// Concepts:
+// - What happens if res is unbuffered?
+// If you change the code to res := make(chan string):
+// 3 goroutines are started: Each one calls simulateReplica and then tries to send its result to res <- ....
+// main waits for one: The fmt.Println(<-res) line blocks until the fastest replica finishes.
+// main finishes and exits: Once main receives that first result, it proceeds. In this simple script, the program ends.
+// In a real long-running server, main would move on to other tasks.
+// The "Slow" Goroutines are stuck: The other 2 replicas were slightly slower. When they finish their work and try to send their result (res <- ...), there is no longer anyone listening (receiving) on that channel.
+//
+// Perpetual Blocking: Because an unbuffered channel requires a sender and a receiver to be present at the same time, those 2 "slow" goroutines will block on that send line forever.
+// They can never finish their function and disappear.
+
+// - What does "goroutine leak" mean?
+// A goroutine leak occurs when you start a goroutine that is intended to be temporary, but it never terminates.
+// It stays "alive" in memory for the entire duration of your program's life.
+
+// Why it's bad:
+// Memory Usage: Each goroutine has its own stack (starting at ~2KB). If you have a leak in a high-traffic web server (e.g., leaking 2 goroutines every request), you will eventually run out of RAM and the process will crash (OOM - Out of Memory).
+// Resource Exhaustion: Leaked goroutines might hold onto file descriptors, database connections, or other resources that never get released.
+// Garbage Collection: The Go Garbage Collector cannot clean up a goroutine that is blocked waiting on a channel. It assumes the goroutine is still doing "work."
 
 package main
 
@@ -36,6 +57,14 @@ func main() {
 
 	// TODO: Query all replicas concurrently.
 	// Accept only the first response and print it.
+	res := make(chan string, 3)
+	for _, replica := range replicas {
+		go func() {
+			res <- simulateReplica(replica)
+		}()
+	}
+
+	fmt.Println(<-res)
 
 	_ = replicas        // remove once you use replicas
 	_ = fmt.Println     // remove once you use fmt
