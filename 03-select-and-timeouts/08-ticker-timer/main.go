@@ -53,6 +53,23 @@ func main() {
 	//      case <-ticker.C:  print heartbeat with elapsed time
 	//      case <-timer.C:   print deadline message and return
 
-	_ = fmt.Println // remove once you use fmt
-	_ = time.Now    // remove once you use time
+	start_time := time.Now()
+	timer := time.NewTimer(2 * time.Second)
+	ticker := time.NewTicker(500 * time.Millisecond)
+	defer timer.Stop()
+	defer ticker.Stop()
+	counter := 0
+	for {
+		select {
+		case <-ticker.C:
+			fmt.Println("heartbeat at ", time.Since(start_time).Round(time.Millisecond))
+		case <-timer.C:
+			fmt.Println("deadline reached after ", time.Since(start_time).Round(time.Millisecond))
+			counter += 1
+			timer.Reset(2 * time.Second)
+			if counter == 3 {
+				return
+			}
+		}
+	}
 }
