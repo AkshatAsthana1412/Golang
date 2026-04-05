@@ -34,21 +34,62 @@ import (
 )
 
 // TODO: Implement generate — sends nums onto channel, then closes it.
-// func generate(nums []int) <-chan int { ... }
+func generate(nums []int) <-chan int {
+	out := make(chan int)
+	go func() {
+		defer close(out)
+		for _, num := range nums {
+			out <- num
+		}
+	}()
+	return out
+}
 
 // TODO: Implement square — reads from in, sends v*v on output, then closes output.
-// func square(in <-chan int) <-chan int { ... }
+func square(in <-chan int) <-chan int {
+	ch := make(chan int)
+	go func() {
+		defer close(ch)
+		for num := range in {
+			ch <- num * num
+		}
+	}()
+	return ch
+}
+
+type Result struct {
+	Number  int
+	Channel int
+}
 
 // TODO: Implement merge — combines multiple channels into one.
-// func merge(channels ...<-chan int) <-chan int { ... }
+func merge(channels ...<-chan int) <-chan Result {
+	out := make(chan Result)
+	go func() {
+		var wg sync.WaitGroup
+		for ch_id, ch := range channels {
+			wg.Add(1)
+			go func() {
+				for n := range ch {
+					out <- Result{Number: n, Channel: ch_id}
+				}
+				wg.Done()
+			}()
+		}
+		wg.Wait()
+		close(out)
+	}()
+	return out
+}
 
 func main() {
-	_ = fmt.Println
-	_ = sync.WaitGroup{}
-
-	// TODO:
 	// 1. Generate numbers 1..20
+	feed := []int{1, 2, 3, 4, 5, 6, 7, 8, 9, 10}
+	in := generate(feed)
 	// 2. Fan-out: launch 3 square workers reading from the same channel
 	// 3. Fan-in: merge the 3 output channels
 	// 4. Print all results
+	for result := range merge(square(in), square(in), square(in)) {
+		fmt.Println(result.Number, "from channel", result.Channel)
+	}
 }
