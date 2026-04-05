@@ -35,7 +35,7 @@ package main
 
 import "fmt"
 
-// TODO: Implement generate — sends all nums onto a channel, then closes it.
+// generate — sends all nums onto a channel, then closes it.
 func generate(nums []int) <-chan int {
 	ch := make(chan int)
 	go func() {
@@ -47,7 +47,7 @@ func generate(nums []int) <-chan int {
 	return ch
 }
 
-// TODO: Implement square — reads from in, sends v*v, then closes output.
+// square — reads from in, sends v*v, then closes output.
 func square(in <-chan int) <-chan int {
 	ch := make(chan int)
 	go func() {
@@ -59,7 +59,7 @@ func square(in <-chan int) <-chan int {
 	return ch
 }
 
-// TODO: Implement filterOdd — reads from in, sends only odd values, then closes output.
+// filterOdd — reads from in, sends only odd values, then closes output.
 func filterOdd(in <-chan int) <-chan int {
 	ch := make(chan int)
 	go func() {
