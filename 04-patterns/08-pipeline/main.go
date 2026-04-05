@@ -36,16 +36,46 @@ package main
 import "fmt"
 
 // TODO: Implement generate — sends all nums onto a channel, then closes it.
-// func generate(nums []int) <-chan int { ... }
+func generate(nums []int) <-chan int {
+	ch := make(chan int)
+	go func() {
+		defer close(ch)
+		for _, num := range nums {
+			ch <- num
+		}
+	}()
+	return ch
+}
 
 // TODO: Implement square — reads from in, sends v*v, then closes output.
-// func square(in <-chan int) <-chan int { ... }
+func square(in <-chan int) <-chan int {
+	ch := make(chan int)
+	go func() {
+		defer close(ch)
+		for num := range in {
+			ch <- num * num
+		}
+	}()
+	return ch
+}
 
 // TODO: Implement filterOdd — reads from in, sends only odd values, then closes output.
-// func filterOdd(in <-chan int) <-chan int { ... }
+func filterOdd(in <-chan int) <-chan int {
+	ch := make(chan int)
+	go func() {
+		defer close(ch)
+		for sq := range in {
+			if sq%2 == 1 {
+				ch <- sq
+			}
+		}
+	}()
+	return ch
+}
 
 func main() {
-	_ = fmt.Println // remove once you use fmt
-
-	// TODO: Wire the pipeline: generate → square → filterOdd → print
+	feed := []int{1, 2, 3, 4, 5, 6, 7, 8, 9, 10}
+	for n := range filterOdd(square(generate(feed))) {
+		fmt.Println(n)
+	}
 }
