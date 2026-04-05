@@ -602,3 +602,19 @@ The solutions follow a consistent philosophy drawn from Go's concurrency ethos:
 4. **Always handle shutdown.** Every solution demonstrates clean termination — via `WaitGroup`, channel closing, or `context` cancellation. No goroutine is left running by accident.
 
 5. **Use the race detector.** It's not optional. Run `go run -race .` on every concurrent program during development.
+
+## Concepts
+
+### Channels
+**Why channels exist:** 
+Channels exist so goroutines can communicate safely without sharing locks for every handoff: they combine data transfer with ordering and synchronization (“happens before” between send and receive). That fits Go’s slogan: *don’t communicate by sharing memory; share memory by communicating*.
+
+**Why they only really make sense with multiple goroutines:**
+With one goroutine, there is no concurrent producer/consumer: nothing is racing, and you don’t need a rendezvous — you can use ordinary variables, slices, return values, and function call order.
+
+Channels become meaningful when at least two goroutines are involved (or when you explicitly want to block until another goroutine is ready): one side sends or closes, another receives. Then the channel’s blocking, closing, and range behavior define who waits for whom and when work can proceed.
+
+Bottom line: channels are for coordinating concurrent execution; sequential-only programs don’t need them as a primitive — they need them once goroutines must exchange data or signals safely.
+
+**Unbuffered channels are rendezvous points**
+An unbuffered channel synchronizes two sides: a send completes only when another goroutine takes the value (and vice versa). It’s coordination through handshake, not “fire and forget.” **Same goroutine can’t play both sides of that handshake.**
