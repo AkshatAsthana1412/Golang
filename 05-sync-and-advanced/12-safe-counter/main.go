@@ -31,20 +31,84 @@ import (
 	"sync"
 )
 
+const (
+	numGoroutines = 10
+	numIncrements = 1000
+)
+
 // TODO: Implement racyCounter — demonstrates a data race.
-// func racyCounter() int { ... }
+func racyCounter() int {
+	wg := sync.WaitGroup{}
+	counter := 0
+	for range numGoroutines {
+		wg.Add(1)
+		go func() {
+			for range numIncrements {
+				counter++
+			}
+			wg.Done()
+		}()
+	}
+	wg.Wait()
+	return counter
+}
 
 // TODO: Implement mutexCounter — uses sync.Mutex for safety.
-// func mutexCounter() int { ... }
+func mutexCounter() int {
+	wg := sync.WaitGroup{}
+	var mu sync.Mutex
+	counter := 0
+	for range numGoroutines {
+		wg.Add(1)
+		go func() {
+			for range numIncrements {
+				mu.Lock()
+				counter++
+				mu.Unlock()
+			}
+			wg.Done()
+		}()
+	}
+	wg.Wait()
+	return counter
+}
 
 // TODO: Implement channelCounter — uses channels instead of locks.
-// func channelCounter() int { ... }
+func channelCounter() int {
+	out := make(chan int)
+	wg := sync.WaitGroup{}
+	counter := 0
+	// launch the goroutines to send 1 to the out channel
+	for range numGoroutines {
+		wg.Add(1)
+		go func() {
+			defer wg.Done()
+			for range numIncrements {
+				out <- 1
+			}
+		}()
+	}
+
+	// close the channel once all senders are done
+	go func() {
+		wg.Wait()
+		close(out)
+	}()
+
+	// collect the results, main goroutine blocks here until the out channel is closed
+	for v := range out {
+		counter += v
+	}
+
+	return counter
+}
 
 func main() {
-	_ = fmt.Println
 	_ = sync.Mutex{}
-
 	// TODO: Run each version and print the result.
 	// Observe that racyCounter gives wrong results and triggers -race,
 	// while the other two always give 10000.
+	fmt.Printf("Racy counter value: %d\n", racyCounter())
+	fmt.Printf("Mutex Counter value: %d\n", mutexCounter())
+	fmt.Printf("Mutex Counter value: %d\n", channelCounter())
 }
