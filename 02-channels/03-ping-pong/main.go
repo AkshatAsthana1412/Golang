@@ -26,8 +26,6 @@ package main
 
 import (
 	"fmt"
-	"os"
-	"runtime/trace"
 )
 
 func main() {
@@ -37,41 +35,40 @@ func main() {
 	// Stop when the count reaches 10.
 	// Trace must go to its own file (or stderr); mixing trace binary data with
 	// fmt.Println on stdout corrupts the file (go tool trace will fail to parse).
-	traceFile, err := os.Create("trace.out")
-	if err != nil {
-		panic(err)
-	}
-	defer traceFile.Close()
-	if err := trace.Start(traceFile); err != nil {
-		panic(err)
-	}
-	defer trace.Stop()
 	ball := make(chan int)
 	done := make(chan struct{})
 
-	// ping
 	go func() {
 		for {
-			count := <-ball
-			if count > 10 {
-				done <- struct{}{}
+			b, ok := <-ball
+			if !ok {
 				return
 			}
-			ball <- count + 1
-			fmt.Println("Ball hit by ping.")
+
+			if b > 10 {
+				done <- struct{}{}
+				close(ball)
+				return
+			}
+			ball <- b + 1
+			fmt.Println("Ball hit by ping", b)
 		}
 	}()
 
-	// pong
 	go func() {
 		for {
-			count := <-ball
-			if count > 10 {
-				done <- struct{}{}
+			b, ok := <-ball
+			if !ok {
 				return
 			}
-			ball <- count + 1
-			fmt.Println("Ball hit by pong.")
+
+			if b > 10 {
+				done <- struct{}{}
+				close(ball)
+				return
+			}
+			ball <- b + 1
+			fmt.Println("Ball hit by pong", b)
 		}
 	}()
 
