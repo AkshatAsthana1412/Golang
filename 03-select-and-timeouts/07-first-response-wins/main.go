@@ -55,7 +55,7 @@ func simulateReplica(name string) string {
 func main() {
 	replicas := []string{"replica-A", "replica-B", "replica-C"}
 
-	// TODO: Query all replicas concurrently.
+	// Query all replicas concurrently.
 	// Accept only the first response and print it.
 	res := make(chan string, 3)
 	for _, replica := range replicas {
@@ -65,8 +65,4 @@ func main() {
 	}
 
 	fmt.Println(<-res)
-
-	_ = replicas        // remove once you use replicas
-	_ = fmt.Println     // remove once you use fmt
-	_ = simulateReplica // remove once you use simulateReplica
 }

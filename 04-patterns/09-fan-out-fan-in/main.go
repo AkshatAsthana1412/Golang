@@ -33,7 +33,7 @@ import (
 	"sync"
 )
 
-// TODO: Implement generate — sends nums onto channel, then closes it.
+// Implement generate — sends nums onto channel, then closes it.
 func generate(nums []int) <-chan int {
 	out := make(chan int)
 	go func() {
@@ -45,7 +45,7 @@ func generate(nums []int) <-chan int {
 	return out
 }
 
-// TODO: Implement square — reads from in, sends v*v on output, then closes output.
+// Implement square — reads from in, sends v*v on output, then closes output.
 func square(in <-chan int) <-chan int {
 	ch := make(chan int)
 	go func() {
@@ -62,9 +62,10 @@ type Result struct {
 	Channel int
 }
 
-// TODO: Implement merge — combines multiple channels into one.
+// Implement merge — combines multiple channels into one.
 func merge(channels ...<-chan int) <-chan Result {
 	out := make(chan Result)
+	// check solutions/main.go for another way to implement this
 	go func() {
 		var wg sync.WaitGroup
 		for ch_id, ch := range channels {
