@@ -27,7 +27,12 @@
 
 package main
 
-import "fmt"
+import (
+	"fmt"
+	"runtime"
+	"sync"
+	"time"
+)
 
 // Result holds a number and its prime factors.
 type Result struct {
@@ -50,18 +55,60 @@ func factorize(n int) []int {
 }
 
 // TODO: Implement worker — reads jobs from the jobs channel, factorizes, sends Result.
-// func worker(id int, jobs <-chan int, results chan<- Result) { ... }
+func worker(id int, jobs <-chan int, results chan<- Result) {
+	for n := range jobs {
+		results <- Result{Number: n, Factors: factorize(n)}
+		// fmt.Printf("Worker %d, factorised number %d\n", id, n)
+	}
+}
 
 func main() {
 	_ = fmt.Println // remove once you use fmt
 
-	numbers := []int{12, 35, 77, 100, 131, 256, 360, 997, 1024, 2310}
+	// numbers := []int{12, 35, 77, 100, 131, 256, 360, 997, 1024, 2310}
 
 	// TODO:
 	// 1. Create jobs and results channels
 	// 2. Launch N workers (try 3)
 	// 3. Send all numbers as jobs, then close the jobs channel
 	// 4. Collect and print all results
+	start_time := time.Now()
+	procs := runtime.GOMAXPROCS(0)
+	fmt.Println("GOMAXPROCS:", procs)
+	jobs := make(chan int)
+	results := make(chan Result)
+	var wg sync.WaitGroup
+	// spawning N workers
+	for i := range 8 {
+		wg.Add(1)
+		go func() {
+			defer wg.Done()
+			worker(i, jobs, results)
+		}()
+	}
 
-	_ = numbers
+	// goroutine to generate jobs in the jobs channel
+	go func() {
+		defer close(jobs)
+		for n := range 100000 {
+			jobs <- n
+		}
+	}()
+
+	// goroutine to close the results channel once all the workers are done processing
+	go func() {
+		wg.Wait()
+		close(results)
+	}()
+
+	num_results := 0
+	for range results {
+		num_results++
+	}
+
+	fmt.Printf("Factorised %d numbers in %s.\n", num_results, time.Since(start_time))
+
+	// Factorised 100000 numbers in 632.645791ms. 3 workers
+	// Factorised 100000 numbers in 472.072125ms. 5 workers
+	// Factorised 100000 numbers in 387.46375ms. 20 workers
 }
