@@ -29,6 +29,7 @@ package main
 
 import (
 	"fmt"
+	"os"
 	"runtime"
 	"sync"
 	"time"
@@ -78,13 +79,27 @@ func main() {
 	jobs := make(chan int)
 	results := make(chan Result)
 	var wg sync.WaitGroup
+
+	// Get N from command line args, default to 3 if missing or invalid
+	N := 3
+	if len(os.Args) > 1 {
+		var nArg int
+		_, err := fmt.Sscanf(os.Args[1], "%d", &nArg)
+		if err == nil && nArg > 0 {
+			N = nArg
+		} else {
+			fmt.Println("Invalid N provided, using default N=3")
+		}
+	}
+	fmt.Printf("Spawning %d workers\n", N)
+
 	// spawning N workers
-	for i := range 8 {
+	for i := 0; i < N; i++ {
 		wg.Add(1)
-		go func() {
+		go func(id int) {
 			defer wg.Done()
-			worker(i, jobs, results)
-		}()
+			worker(id, jobs, results)
+		}(i)
 	}
 
 	// goroutine to generate jobs in the jobs channel
@@ -108,7 +123,8 @@ func main() {
 
 	fmt.Printf("Factorised %d numbers in %s.\n", num_results, time.Since(start_time))
 
-	// Factorised 100000 numbers in 632.645791ms. 3 workers
-	// Factorised 100000 numbers in 472.072125ms. 5 workers
-	// Factorised 100000 numbers in 387.46375ms. 20 workers
+	// Factorised 100000 numbers in 226.928584ms. 3 workers
+	// Factorised 100000 numbers in 194.636083ms. 5 workers
+	// Factorised 100000 numbers in 193.254125ms. 10 workers
+	// Factorised 100000 numbers in 164.107959ms. 20 workers
 }
