@@ -61,7 +61,11 @@ func main() {
 
 	go func() {
 		for range ticker.C {
-			bursty_bucket <- struct{}{}
+			select {
+			case bursty_bucket <- struct{}{}:
+			default:
+			}
+
 		}
 	}()
 
