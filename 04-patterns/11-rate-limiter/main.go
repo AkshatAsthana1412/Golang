@@ -25,8 +25,16 @@ package main
 
 import (
 	"fmt"
+	"math/rand"
+	"sync"
 	"time"
 )
+
+func processRequest(req string) {
+	start_time := time.Now()
+	time.Sleep(time.Duration(200+10*rand.Intn(50)) * time.Millisecond)
+	fmt.Printf("Processed: %s successfully! time elapsed: %s\n", req, time.Since(start_time).Round(time.Millisecond))
+}
 
 func main() {
 	requests := []string{
@@ -36,35 +44,35 @@ func main() {
 
 	// TODO Part A: Process requests at a steady 5/sec rate.
 	// For each request, wait for a tick, then print the request with time.Now().
-	start_time := time.Now()
-	// for _, request := range requests {
-	// 	<-time.Tick(200 * time.Millisecond)
-	// 	fmt.Printf("%s  %s  %s\n", time.Now().Format("15:04:05.000"), request, time.Since(start_time))
+	// for _, req := range requests {
+	// 	<-ticker.C
+	// 	fmt.Println("Processing ", req, "at ", time.Since(start_time).Round(time.Millisecond))
 	// }
 
-	// TODO Part B: Allow an initial burst of 3, then 5/sec steady state.
-	// Create a buffered channel (cap 3), pre-fill with tokens, refill via tick.
-	burstyBucket := make(chan struct{}, 3)
-
-	// prefill 3 tokens
+	bursty_bucket := make(chan struct{}, 3)
 	for range 3 {
-		burstyBucket <- struct{}{}
+		bursty_bucket <- struct{}{}
 	}
 
-	// go routine to refill burstyBucket, because this is what the main goroutine is blocking on, so we have to simulate the ticker with it.
+	start_time := time.Now()
 	ticker := time.NewTicker(200 * time.Millisecond)
 	defer ticker.Stop()
+	var wg sync.WaitGroup
+
 	go func() {
 		for range ticker.C {
-			select {
-			case burstyBucket <- struct{}{}:
-			default:
-			}
+			bursty_bucket <- struct{}{}
 		}
 	}()
 
-	for _, request := range requests {
-		<-burstyBucket
-		fmt.Printf("%s  %s  %s\n", time.Now().Format("15:04:05.000"), request, time.Since(start_time))
+	for _, req := range requests {
+		wg.Add(1)
+		<-bursty_bucket
+		fmt.Printf("%s, triggered at %s\n", req, time.Since(start_time).Round(time.Millisecond))
+		go func() {
+			defer wg.Done()
+			processRequest(req)
+		}()
 	}
+	wg.Wait()
 }
