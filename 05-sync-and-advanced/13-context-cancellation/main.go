@@ -34,19 +34,52 @@ package main
 import (
 	"context"
 	"fmt"
+	"math/rand"
 	"time"
 )
 
-// TODO: Implement searchDB — simulates a DB search, respecting context cancellation.
-// func searchDB(ctx context.Context, dbName string, query string) (string, error) { ... }
+// Implement searchDB — simulates a DB search, respecting context cancellation.
+func searchDB(ctx context.Context, dbName string, query string) (string, error) {
+	latency := time.Duration(500+rand.Intn(500)) * time.Millisecond
+	select {
+	case <-ctx.Done():
+		return "", ctx.Err()
+	case <-time.After(latency):
+		return fmt.Sprintf("%s returned result for query %s in %d ms.", dbName, query, latency.Milliseconds()), nil
+	}
+}
 
 func main() {
-	_ = fmt.Println
-	_ = context.Background
-	_ = time.Now
-
-	// TODO:
 	// 1. Create a cancellable context.
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
+	results := make(chan string, 3)
+	query := "select * from customers;"
 	// 2. Launch 3 goroutines searching different databases.
+	go func() {
+		result, err := searchDB(ctx, "db1", query)
+		if err == nil {
+			results <- result
+		}
+	}()
+	go func() {
+		result, err := searchDB(ctx, "db2", query)
+		if err == nil {
+			results <- result
+		}
+	}()
+	go func() {
+		result, err := searchDB(ctx, "db3", query)
+		if err == nil {
+			results <- result
+		}
+	}()
 	// 3. Accept the first result, cancel the rest, and print the winner.
+	select {
+	case res := <-results:
+		fmt.Println(res)
+		cancel()
+	case <-time.After(1 * time.Second):
+		fmt.Println("All searches timed out!")
+	}
 }
