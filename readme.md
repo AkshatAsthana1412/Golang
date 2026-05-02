@@ -1,6 +1,6 @@
 # Go Concurrency Patterns
 
-A hands-on collection of 16 progressively challenging problems designed to teach Go concurrency from first principles.
+A hands-on collection of 16 progressively challenging problems designed to practice Go concurrency from first principles.
 
 ## How to Use
 
