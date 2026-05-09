@@ -34,7 +34,9 @@ import (
 )
 
 // TODO: Implement the philosopher goroutine.
-// func philosopher(id int, forks [5]*sync.Mutex, wg *sync.WaitGroup) { ... }
+func philosopher(id int, forks [5]*sync.Mutex, wg *sync.WaitGroup) {
+
+}
 
 func main() {
 	_ = fmt.Println

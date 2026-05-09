@@ -14,7 +14,7 @@ Work through the problems **in order** (1 through 15). Each one builds on concep
 ### Running a Problem
 
 ```bash
-cd 01-goroutines/01-hello-goroutine
+cd concurrency/01-goroutines/01-hello-goroutine
 go run .            # run your solution
 go run -race .      # run with the race detector enabled
 ```
